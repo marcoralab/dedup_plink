@@ -1,0 +1,4 @@
+filesets:
+  ASPREE: /mnt/working/AD/snp/imputed_Qcd_data_unrel_v2
+
+outdir: /mnt/working/AD/snp/deduplicated

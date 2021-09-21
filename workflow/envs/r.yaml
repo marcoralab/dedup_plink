@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.1.1
+  - r-dplyr=1.0.7
+  - r-glue=1.4.2
+  - r-vroom=1.5.5

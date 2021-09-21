@@ -1,0 +1,45 @@
+configfile: "config/config.yaml"
+shell.executable("/bin/bash")
+
+SAMPLE = config['filesets'].keys()
+
+
+rule all:
+    input:
+        expand(multiext('{outdir}/{sample}', '.bed', '.bim', '.fam'),
+               outdir=config['outdir'], sample=config['filesets'].keys())
+
+rule getdups:
+    input:
+        lambda wildcards: config['filesets'][wildcards['sample']] + '.bim'
+    output:
+        bim = temp('temp/{sample}_firstdedup.bim'),
+        rem = expand('{outdir}/{{sample}}.dups.remove',
+                     outdir=config['outdir'])
+    conda: 'envs/r.yaml'
+    script: 'scripts/rename_dups.R'
+
+
+def in_plink(wildcards):
+    stem = config['filesets'][wildcards['sample']]
+    return multiext(stem, '.bed', '.bim', '.fam')
+
+
+rule filter_plink:
+    input:
+        plink = in_plink,
+        bim = rules.getdups.output.bim,
+        rem = rules.getdups.output.rem
+    output:
+        multiext('{outdir}/{sample}', '.bed', '.bim', '.fam')
+    params:
+        ins = lambda wildcards: config['filesets'][wildcards['sample']],
+        out = '{outdir}/{sample}'
+    conda: 'envs/plink.yaml'
+    shell:
+        r'''
+plink --keep-allele-order \
+  --bfile {params.ins} --bim {input.bim} \
+  --exclude {input.rem} \
+  --make-bed --out {params.out}
+'''
